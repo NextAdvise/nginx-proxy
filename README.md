@@ -1,5 +1,5 @@
 ![latest 0.7.0](https://img.shields.io/badge/latest-0.7.0-green.svg?style=flat)
-![nginx 1.14.1](https://img.shields.io/badge/nginx-1.14-brightgreen.svg) ![License MIT](https://img.shields.io/badge/license-MIT-blue.svg) [![Build Status](https://travis-ci.org/jwilder/nginx-proxy.svg?branch=master)](https://travis-ci.org/jwilder/nginx-proxy) [![](https://img.shields.io/docker/stars/jwilder/nginx-proxy.svg)](https://hub.docker.com/r/jwilder/nginx-proxy 'DockerHub') [![](https://img.shields.io/docker/pulls/jwilder/nginx-proxy.svg)](https://hub.docker.com/r/jwilder/nginx-proxy 'DockerHub')
+![nginx 1.13](https://img.shields.io/badge/nginx-1.13-brightgreen.svg) ![License MIT](https://img.shields.io/badge/license-MIT-blue.svg) [![Build Status](https://travis-ci.org/jwilder/nginx-proxy.svg?branch=master)](https://travis-ci.org/jwilder/nginx-proxy) [![](https://img.shields.io/docker/stars/jwilder/nginx-proxy.svg)](https://hub.docker.com/r/jwilder/nginx-proxy 'DockerHub') [![](https://img.shields.io/docker/pulls/jwilder/nginx-proxy.svg)](https://hub.docker.com/r/jwilder/nginx-proxy 'DockerHub')
 
 
 nginx-proxy sets up a container running nginx and [docker-gen][1].  docker-gen generates reverse proxy configs for nginx and reloads nginx when containers are started and stopped.
@@ -69,7 +69,7 @@ You can activate the IPv6 support for the nginx-proxy container by passing the v
 
 ### Multiple Ports
 
-If your container exposes multiple ports, nginx-proxy will default to the service running on port 80.  If you need to specify a different port, you can set a VIRTUAL_PORT env var to select a different one.  If your container only exposes one port and it has a VIRTUAL_HOST env var set, that port will be selected.
+If your container exposes multiple ports, nginx-proxy will default to the service running on port 80.  If you need to specify a different port, you can set a VIRTUAL_PORT env var to select a different one.  If your container only exposes one port and it has a VIRTUAL_HOST env var set, that port will be selected. Or you can try your hand at the Advanced VIRTUAL_HOST syntax.
 
   [1]: https://github.com/jwilder/docker-gen
   [2]: http://jasonwilder.com/blog/2014/03/25/automated-nginx-reverse-proxy-for-docker/
@@ -121,6 +121,22 @@ If you would like the reverse proxy to connect to your backend using HTTPS inste
 
 > Note: If you use `VIRTUAL_PROTO=https` and your backend container exposes port 80 and 443, `nginx-proxy` will use HTTPS on port 80.  This is almost certainly not what you want, so you should also include `VIRTUAL_PORT=443`.
 
+### Advanced VIRTUAL_HOST syntax
+
+Using the Advanced VIRTUAL_HOST syntax you can specify multiple host names to each go to their own backend port. Basically provides support for VIRTUAL_HOST, VIRTUAL_PORT, and VIRTUAL_PROTO all in one field.
+
+For example, given the following:
+
+```
+VIRTUAL_HOST=api.example.com__http:80,api-admin.example.com__http:8001,secure.example.com__https:8443
+```
+
+This would yield 3 different server/upstream configurations...
+
+1. Requests for api.example.com would route to this container's port 80 via http
+2. Requests for api-admin.example.com would route to this containers port 8001 via http
+3. Requests for secure.example.com would route to this containers port 8443 via https
+
 ### uWSGI Backends
 
 If you would like to connect to uWSGI backend, set `VIRTUAL_PROTO=uwsgi` on the
@@ -128,11 +144,11 @@ backend container. Your backend container should then listen on a port rather
 than a socket and expose that port.
 
 ### FastCGI Backends
- 
+
 If you would like to connect to FastCGI backend, set `VIRTUAL_PROTO=fastcgi` on the
 backend container. Your backend container should then listen on a port rather
 than a socket and expose that port.
- 
+
 ### FastCGI Filr Root Directory
 
 If you use fastcgi,you can set `VIRTUAL_ROOT=xxx`  for your root directory
@@ -183,10 +199,6 @@ Finally, start your containers with `VIRTUAL_HOST` environment variables.
 
 [letsencrypt-nginx-proxy-companion](https://github.com/JrCs/docker-letsencrypt-nginx-proxy-companion) is a lightweight companion container for the nginx-proxy. It allow the creation/renewal of Let's Encrypt certificates automatically.
 
-Set `DHPARAM_GENERATION` environment variable to `false` to disabled Diffie-Hellman parameters completely. This will also ignore auto-generation made by `nginx-proxy`.
-The default value is `true`
-
-     $ docker run -e DHPARAM_GENERATION=false ....
 ### SSL Support
 
 SSL is supported using single host, wildcard and SNI certificates using naming conventions for
@@ -294,11 +306,11 @@ site after changing this setting, your browser has probably cached the HSTS poli
 redirecting you back to HTTPS.  You will need to clear your browser's HSTS cache or use an incognito
 window / different browser.
 
-By default, [HTTP Strict Transport Security (HSTS)](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security) 
-is enabled with `max-age=31536000` for HTTPS sites.  You can disable HSTS with the environment variable 
-`HSTS=off` or use a custom HSTS configuration like `HSTS=max-age=31536000; includeSubDomains; preload`.  
-*WARNING*: HSTS will force your users to visit the HTTPS version of your site for the `max-age` time - 
-even if they type in `http://` manually.  The only way to get to an HTTP site after receiving an HSTS 
+By default, [HTTP Strict Transport Security (HSTS)](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security)
+is enabled with `max-age=31536000` for HTTPS sites.  You can disable HSTS with the environment variable
+`HSTS=off` or use a custom HSTS configuration like `HSTS=max-age=31536000; includeSubDomains; preload`.
+*WARNING*: HSTS will force your users to visit the HTTPS version of your site for the `max-age` time -
+even if they type in `http://` manually.  The only way to get to an HTTP site after receiving an HSTS
 response is to clear your browser's HSTS cache.
 
 ### Basic Authentication Support
